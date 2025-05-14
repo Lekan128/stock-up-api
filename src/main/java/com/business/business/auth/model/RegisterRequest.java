@@ -13,6 +13,9 @@ public class RegisterRequest {
     public String phoneNumber;
     @NotBlank
     public String password;
+    @NotBlank
+    public String store;
+    public String storeAddress;
 //    @NotBlank
     public Role role;
 }

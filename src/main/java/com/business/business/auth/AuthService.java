@@ -5,6 +5,9 @@ import com.business.business.auth.model.RefreshTokenRequest;
 import com.business.business.auth.model.RegisterRequest;
 import com.business.business.config.JwtService;
 import com.business.business.exception.AuthenticationException;
+import com.business.business.store.Store;
+import com.business.business.store.StoreDto;
+import com.business.business.store.StoreService;
 import com.business.business.token.Token;
 import com.business.business.token.TokenRepository;
 import com.business.business.user.Role;
@@ -17,6 +20,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -27,11 +31,15 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserService userService;
+    private final StoreService storeService;
     private final TokenRepository tokenRepository;
 
+    @Transactional
     public AuthResponse register(RegisterRequest registerRequest){
         String password = passwordEncoder.encode(registerRequest.password);
         User user = userService.createUser(registerRequest, password);
+        var store = storeService.createStore(new StoreDto(registerRequest.store, registerRequest.storeAddress));
+        userService.updateUserStore(store, user);
         return generateTokensSaveTokensAndDeleteExpiredTokens(user);
     }
     AuthenticationManager authenticationManager;
@@ -52,8 +60,12 @@ public class AuthService {
         tokenRepository.deleteAllByUserId(user.getId());
     }
 
-    public User getCurrentAuthenticatedUser(){
+    public static User getCurrentAuthenticatedUser(){
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    public static Store getCurrentAuthenticatedUserStore(){
+        return getCurrentAuthenticatedUser().getStore();
     }
 
     private AuthResponse generateTokensSaveTokensAndDeleteExpiredTokens(User user){

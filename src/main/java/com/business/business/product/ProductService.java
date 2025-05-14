@@ -5,10 +5,15 @@ import com.blazebit.persistence.CriteriaBuilderFactory;
 import com.blazebit.persistence.WhereOrBuilder;
 import com.blazebit.persistence.view.EntityViewManager;
 import com.blazebit.persistence.view.EntityViewSetting;
+import com.business.business.auth.AuthService;
 import com.business.business.category.Category;
 import com.business.business.category.CategoryService;
+import com.business.business.exception.BadRequestException;
+import com.business.business.store.Store;
 import com.business.business.tag.Tag;
 import com.business.business.tag.TagService;
+import com.business.business.user.Role;
+import com.business.business.user.User;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -43,6 +48,11 @@ public class ProductService {
             category = categoryService.getCategoryById(productDto.categoryId);
         }
 
+        Store store = AuthService.getCurrentAuthenticatedUserStore();
+        if (store==null){
+            throw new BadRequestException("You cannot create a product since you don't have a store");
+        }
+
 //        Set<Tag> tags = null;
 //        if (productDto.tags != null){
 //            tags = tagService.findAllByName(productDto.tags);
@@ -53,6 +63,7 @@ public class ProductService {
                 .category(category)
                 .imageUrl(productDto.imageUrl)
 //                .tags(tags)
+                .store(store)
                 .numberAvailable(productDto.numberAvailable)
                 .costPrice(productDto.costPrice)
                 .sellingPrice(productDto.sellingPrice)
@@ -76,6 +87,12 @@ public class ProductService {
         if (categoryId!=null){
             productCriteriaBuilder.where("category.id").eq(categoryId);
         }
+
+        User currentAuthUser = AuthService.getCurrentAuthenticatedUser();
+        if (currentAuthUser.getRole() != Role.ADMIN && currentAuthUser.getStore() != null){
+            productCriteriaBuilder.where("store.id").eq(currentAuthUser.getStore().id);
+        }
+
         if (search!=null){
             String likeValue = "%" + search.toLowerCase() + "%";
             WhereOrBuilder<CriteriaBuilder<Product>> orBuilder = productCriteriaBuilder.whereOr()
@@ -96,6 +113,15 @@ public class ProductService {
 
     public Product updateProduct(UUID id, @Valid ProductDto productDto) {
         Product product = getProductById(id);
+
+        Store store = AuthService.getCurrentAuthenticatedUserStore();
+        if (store==null){
+            throw new BadRequestException("You cannot update a product since you don't have a store");
+        }
+
+        if (!product.store.equals(store)){
+            throw new BadRequestException("You cannot update a product that is not from your store");
+        }
 
         Category category = null;
         if (productDto.categoryId != null){
