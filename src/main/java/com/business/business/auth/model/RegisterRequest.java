@@ -14,7 +14,7 @@ public class RegisterRequest {
     @NotBlank
     public String password;
     @NotBlank
-    public String store;
+    public String storeName;
     public String storeAddress;
 //    @NotBlank
     public Role role;

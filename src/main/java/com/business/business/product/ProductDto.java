@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.UUID;
 
 public class ProductDto {
-    @NotNull
     public UUID categoryId;
 
     @NotNull
