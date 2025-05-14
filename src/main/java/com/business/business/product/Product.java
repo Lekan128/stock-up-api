@@ -1,6 +1,7 @@
 package com.business.business.product;
 
 import com.business.business.category.Category;
+import com.business.business.store.Store;
 import com.business.business.tag.Tag;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -69,6 +70,9 @@ public class Product {
     @Column
     public String description;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "store_id", nullable = false)
+    public Store store;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

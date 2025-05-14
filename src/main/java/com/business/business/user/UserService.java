@@ -2,6 +2,7 @@ package com.business.business.user;
 
 import com.business.business.auth.model.RegisterRequest;
 import com.business.business.exception.UserAlreadyExistsException;
+import com.business.business.store.Store;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,11 @@ public class UserService {
                 .password(password)
                 .role(Role.USER)
                 .build();
+        return userRepository.save(user);
+    }
+
+    public User updateUserStore(Store store, User user){
+        user.setStore(store);
         return userRepository.save(user);
     }
 

@@ -3,6 +3,7 @@ package com.business.business.product;
 import com.blazebit.persistence.view.EntityView;
 import com.blazebit.persistence.view.IdMapping;
 import com.business.business.category.Category;
+import com.business.business.store.Store;
 import com.business.business.tag.Tag;
 
 import java.time.LocalDateTime;
@@ -22,4 +23,5 @@ public interface ProductShortView {
     Double getSellingPrice();
     String  getDescription();
     LocalDateTime getUpdatedAt();
+    Store getStore();
 }
