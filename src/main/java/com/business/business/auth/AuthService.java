@@ -38,7 +38,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest registerRequest){
         String password = passwordEncoder.encode(registerRequest.password);
         User user = userService.createUser(registerRequest, password);
-        var store = storeService.createStore(new StoreDto(registerRequest.store, registerRequest.storeAddress));
+        var store = storeService.createStore(new StoreDto(registerRequest.storeName, registerRequest.storeAddress));
         userService.updateUserStore(store, user);
         return generateTokensSaveTokensAndDeleteExpiredTokens(user);
     }

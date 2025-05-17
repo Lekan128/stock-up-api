@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.UUID;
 
 public class ProductDto {
-    @NotNull
     public UUID categoryId;
 
     @NotNull
@@ -22,7 +21,8 @@ public class ProductDto {
     public Set<String> tags;
 
     @Min(0)
-    public int numberAvailable;
+    @NotBlank
+    public Integer numberAvailable;
 
 //    @DecimalMin(value = "0.0", inclusive = false)
     public Double costPrice;
