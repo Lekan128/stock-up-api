@@ -1,5 +1,6 @@
 package com.business.business.category;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,7 @@ public class CategoryController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Category createCategory(@RequestBody @NotBlank CategoryDto categoryDto) {
+    public Category createCategory(@RequestBody @Valid CategoryDto categoryDto) {
         return categoryService.createCategory(categoryDto.categoryName());
     }
 

@@ -60,7 +60,7 @@ public class ProductController {
         return productService.getProductById(id);
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public Product updateProduct(@PathVariable UUID id, @RequestBody @Valid ProductDto productDto) {
         return productService.updateProduct(id, productDto);
     }
