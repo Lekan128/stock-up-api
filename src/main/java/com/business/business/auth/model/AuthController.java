@@ -18,6 +18,11 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @PostMapping("health")
+    public String register(){
+        return "Up, running and alive!";
+    }
+
     @PostMapping("register")
     public AuthResponse register(@Valid @RequestBody RegisterRequest registerRequest){
         return authService.register(registerRequest);
