@@ -61,15 +61,15 @@ jobs:
             sudo docker run -d \
               --name stockup-business-app \
               -p 8080:8080 \
-              -e 'DB_HOST'=${{ DB_HOST }} \
-              -e 'DB_USER'=${{ DB_USER }} \
-              -e 'DB_PORT'=${{ DB_PORT }} \
-              -e 'DB_NAME'=${{ DB_NAME }} \
-              -e 'DB_PASSWORD'=${{ secrets.DB_PASSWORD }} \
-              -e 'ACCES_TOKEN_EXPIREY'=${{ ACCES_TOKEN_EXPIREY }} \
-              -e 'REFRESH_TOKEN_EXPIREY'=${{ REFRESH_TOKEN_EXPIREY }} \
-              -e 'JWT_SECRETE_KEY'=${{ secrets.JWT_SECRETE_KEY }} \
-              -e 'AWS_BUCKET_NAME'=${{ AWS_BUCKET_NAME }} \
-              -e 'AWS_ACCESS_KEY'=${{ secrets.AWS_ACCESS_KEY }} \
-              -e 'AWS_SECRETE_KEY'=${{ secrets.AWS_SECRETE_KEY }} \
+              -e "DB_HOST"=${{ DB_HOST }} \
+              -e "DB_USER"=${{ DB_USER }} \
+              -e "DB_PORT"=${{ DB_PORT }} \
+              -e "DB_NAME"=${{ DB_NAME }} \
+              -e "DB_PASSWORD"=${{ secrets.DB_PASSWORD }} \
+              -e "ACCES_TOKEN_EXPIREY"=${{ ACCES_TOKEN_EXPIREY }} \
+              -e "REFRESH_TOKEN_EXPIREY"=${{ REFRESH_TOKEN_EXPIREY }} \
+              -e "JWT_SECRETE_KEY"=${{ secrets.JWT_SECRETE_KEY }} \
+              -e "AWS_BUCKET_NAME"=${{ AWS_BUCKET_NAME }} \
+              -e "AWS_ACCESS_KEY"=${{ secrets.AWS_ACCESS_KEY }} \
+              -e "AWS_SECRETE_KEY"=${{ secrets.AWS_SECRETE_KEY }} \
               ${{ secrets.DOCKERHUB_USERNAME }}/stockup-business-app:latest
