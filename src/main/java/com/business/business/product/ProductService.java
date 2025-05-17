@@ -17,6 +17,7 @@ import com.business.business.user.User;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -123,9 +124,9 @@ public class ProductService {
             throw new BadRequestException("You cannot update a product that is not from your store");
         }
 
-        Category category = null;
         if (productDto.categoryId != null){
-            category = categoryService.getCategoryById(productDto.categoryId);
+            Category category = categoryService.getCategoryById(productDto.categoryId);
+            product.setCategory(category);
         }
 
 //        Set<Tag> tags = null;
@@ -133,12 +134,21 @@ public class ProductService {
 //            tags = tagService.findAllByName(productDto.tags);
 //        }
 
-        product.setName(productDto.name);
-        product.setCategory(category);
-        product.setImageUrl(productDto.imageUrl);
+        if (Strings.isNotBlank(productDto.name)){
+            product.setName(productDto.name);
+        }
+
+        if (Strings.isNotBlank(productDto.imageUrl)) {
+            product.setImageUrl(productDto.imageUrl);
+        }
 //        product.setTags(tags);
-        product.setNumberAvailable(productDto.numberAvailable);
-        product.setCostPrice(productDto.costPrice);
+
+        if (productDto.numberAvailable != null && productDto.numberAvailable<0) {
+            product.setNumberAvailable(productDto.numberAvailable);
+        }
+        if (productDto.costPrice!=null) {
+            product.setCostPrice(productDto.costPrice);
+        }
 
         return productRepository.save(product);
     }
