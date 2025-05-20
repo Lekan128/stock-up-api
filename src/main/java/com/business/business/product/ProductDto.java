@@ -12,7 +12,7 @@ import java.util.UUID;
 public class ProductDto {
     public UUID categoryId;
 
-    @NotNull
+    @NotBlank
     public String name;
 
     public String imageUrl;
@@ -21,7 +21,7 @@ public class ProductDto {
     public Set<String> tags;
 
     @Min(0)
-    @NotBlank
+    @NotNull
     public Integer numberAvailable;
 
 //    @DecimalMin(value = "0.0", inclusive = false)
