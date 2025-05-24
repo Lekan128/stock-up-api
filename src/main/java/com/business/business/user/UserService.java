@@ -2,6 +2,7 @@ package com.business.business.user;
 
 import com.business.business.auth.model.RegisterRequest;
 import com.business.business.exception.UserAlreadyExistsException;
+import com.business.business.exception.UserNotFoundException;
 import com.business.business.store.Store;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,7 +17,7 @@ public class UserService {
 
     public User loadUserByUsername(String username){
         return userRepository.findByEmail(username)
-                .orElseThrow(()-> new UsernameNotFoundException("User not found"));
+                .orElseThrow(()-> new UserNotFoundException("User not found"));
     }
 
     public User createUser(RegisterRequest registerRequest, String password) {
