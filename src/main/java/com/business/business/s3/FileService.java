@@ -98,7 +98,7 @@ public class FileService {
             boolean needsCompression = ImageCompressionService.shouldCompressImage(multipartFile);
 
             // Generate S3 file path
-            String filePath = getProductImageFilePath(productId, multipartFile.getOriginalFilename());
+            String filePath = getProductImageFilePath(productId.toString(), multipartFile.getOriginalFilename());
 
             // Handle compression if needed
             if (needsCompression) {
@@ -131,11 +131,18 @@ public class FileService {
     }
 
     /**
-     * filename: productImage/{@productId}/{multipartFile.getOriginalFilename()}
+     * filename: productImage/{@param productIdString}/{@param productIdString}.extension
      * multipartFile.getOriginalFilename()= @fileName
     * */
-    private String getProductImageFilePath(UUID productId, String fileName){
-        // filename:productImage/{productId}/{multipartFile.getOriginalFilename()}
-        return PRODUCT_IMAGE + "/" + productId.toString() + "/" +  fileName;
+    private String getProductImageFilePath(String productIdString, String fileName){
+        // filename:productImage/{productId}/{productId}.extension
+        return PRODUCT_IMAGE + "/" + productIdString + "/" + productIdString + getFileExtension(fileName);
+    }
+
+    private static String getFileExtension(String fileName){
+        if (fileName == null) return "";
+        int lastIndexOfDot = fileName.lastIndexOf(".");
+        if (lastIndexOfDot<0) return "";
+        return fileName.substring(lastIndexOfDot);
     }
 }

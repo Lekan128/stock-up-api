@@ -18,7 +18,7 @@ import java.util.Map;
 public class ImageCompressionService {
 
     // Compression configuration
-    private static final long MAX_SIZE_BYTES = 2 * 1024 * 1024;  // 2MB threshold
+    private static final long MAX_SIZE_BYTES = 1 * 1024 * 1024;  // 1MB threshold
     private static final int MAX_ITERATIONS = 5;                   // Prevent infinite loops
     private static final float MIN_QUALITY = 0.4f;                 // Minimum quality preservation
     private static final float MIN_SCALE = 0.5f;                   // Smallest dimension reduction
