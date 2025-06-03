@@ -4,24 +4,22 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectResult;
 import com.business.business.auth.AuthService;
 import com.business.business.exception.FileUploadException;
-import com.business.business.user.UserService;
+import com.business.business.image.ImageCompressionService;
 import jakarta.annotation.PostConstruct;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -78,32 +76,73 @@ public class FileService {
         return fileUploadResponse;
     }
 
-    public String uploadProductImage(MultipartFile multipartFile, UUID productId) {
+    private final ImageCompressionService imageCompressionService;
 
+    /**
+     * Uploads product image to S3 with automatic compression
+     *
+     * @param multipartFile Image file to upload
+     * @param productId Product identifier
+     * @return S3 URL of uploaded image
+     */
+    public String uploadProductImage(MultipartFile multipartFile, UUID productId) {
         String url = "";
+        File compressedFile = null;
+
         try {
+            // Prepare metadata
             ObjectMetadata objectMetadata = new ObjectMetadata();
             objectMetadata.setContentType(multipartFile.getContentType());
-            objectMetadata.setContentLength(multipartFile.getSize());
 
-            String filePath = getProductImageFilePath(productId, multipartFile.getOriginalFilename());
+            // Determine if compression is needed
+            boolean needsCompression = ImageCompressionService.shouldCompressImage(multipartFile);
 
-            s3Client.putObject(bucketName, filePath, multipartFile.getInputStream(), objectMetadata);
+            // Generate S3 file path
+            String filePath = getProductImageFilePath(productId.toString(), multipartFile.getOriginalFilename());
+
+            // Handle compression if needed
+            if (needsCompression) {
+                compressedFile = imageCompressionService.compressForS3(multipartFile);
+                objectMetadata.setContentLength(compressedFile.length());
+                s3Client.putObject(bucketName, filePath, new FileInputStream(compressedFile), objectMetadata);
+            } else {
+                // Upload original file
+                objectMetadata.setContentLength(multipartFile.getSize());
+                s3Client.putObject(bucketName, filePath, multipartFile.getInputStream(), objectMetadata);
+            }
+
+            // Generate S3 URL
             url = s3Client.getUrl(bucketName, filePath).toString();
 
-        } catch (IOException e) {
-            log.error("Error occurred ==> {}", e.getMessage());
-            throw new FileUploadException("Error occurred in file upload ==> "+e.getMessage());
+        } catch (Exception e) {
+            log.error("Image upload failed: {}", e.getMessage());
+            throw new RuntimeException("Image upload failed: " + e.getMessage());
+        } finally {
+            // Cleanup temporary file
+            if (compressedFile != null && compressedFile.exists()) {
+                boolean deleted = compressedFile.delete();
+                if (!deleted) {
+                    log.warn("Failed to delete temp file: {}", compressedFile.getAbsolutePath());
+                }
+            }
         }
+
         return url;
     }
 
     /**
-     * filename: productImage/{@productId}/{multipartFile.getOriginalFilename()}
+     * filename: productImage/{@param productIdString}/{@param productIdString}.extension
      * multipartFile.getOriginalFilename()= @fileName
     * */
-    private String getProductImageFilePath(UUID productId, String fileName){
-        // filename:productImage/{productId}/{multipartFile.getOriginalFilename()}
-        return PRODUCT_IMAGE + "/" + productId.toString() + "/" +  fileName;
+    private String getProductImageFilePath(String productIdString, String fileName){
+        // filename:productImage/{productId}/{productId}.extension
+        return PRODUCT_IMAGE + "/" + productIdString + "/" + productIdString + getFileExtension(fileName);
+    }
+
+    private static String getFileExtension(String fileName){
+        if (fileName == null) return "";
+        int lastIndexOfDot = fileName.lastIndexOf(".");
+        if (lastIndexOfDot<0) return "";
+        return fileName.substring(lastIndexOfDot);
     }
 }
