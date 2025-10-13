@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,8 +35,8 @@ public class ProductController {
 
     @PostMapping("list")
     @ResponseStatus(HttpStatus.CREATED)
-    public List<Product> createProducts(@RequestBody @Valid List<ProductDto> productDtos) {
-        return productService.createProducts(productDtos);
+    public List<Product> createProducts(@RequestBody @Valid List<ProductShortDto> productDtos) {
+        return productService.createProductsWithSmallDto(productDtos);
     }
 
     @GetMapping("all")

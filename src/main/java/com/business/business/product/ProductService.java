@@ -10,7 +10,6 @@ import com.business.business.category.Category;
 import com.business.business.category.CategoryService;
 import com.business.business.exception.BadRequestException;
 import com.business.business.store.Store;
-import com.business.business.tag.Tag;
 import com.business.business.tag.TagService;
 import com.business.business.user.Role;
 import com.business.business.user.User;
@@ -21,8 +20,6 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -43,6 +40,24 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    public List<Product> createProductsWithSmallDto(@Valid List<ProductShortDto> productSmallDtos) {
+        List<Product> products = productSmallDtos.stream().map(this::mapFromDtoToProduct).toList();
+        return productRepository.saveAll(products);
+    }
+
+    private Product mapFromDtoToProduct(ProductShortDto productDto) {
+        Store store = AuthService.getCurrentAuthenticatedUserStore();
+        if (store==null){
+            throw new BadRequestException("You cannot create a product since you don't have a store");
+        }
+        return Product.builder()
+                .name(productDto.name)
+                .numberAvailable(productDto.numberAvailable)
+                .costPrice(productDto.costPrice)
+                .sellingPrice(productDto.sellingPrice)
+                .store(store)
+                .build();
+    }
     private Product mapFromDtoToProduct(ProductDto productDto) {
         Category category = null;
         if (productDto.categoryId != null){
