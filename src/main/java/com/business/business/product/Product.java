@@ -67,7 +67,6 @@ public class Product {
     @Column(nullable = false)
     public Double sellingPrice;
 
-    @Column
     public String description;
 
     @ManyToOne(optional = false)

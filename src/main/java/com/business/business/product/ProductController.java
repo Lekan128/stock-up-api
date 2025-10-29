@@ -36,7 +36,9 @@ public class ProductController {
     @PostMapping("list")
     @ResponseStatus(HttpStatus.CREATED)
     public List<Product> createProducts(@RequestBody @Valid List<ProductShortDto> productDtos) {
-        return productService.createProductsWithSmallDto(productDtos);
+        List<Product> products = productService.createProductsWithSmallDto(productDtos);
+        productService.asynchronouslyGetAndSaveProductDescription(products);
+        return products;
     }
 
     @GetMapping("all")
