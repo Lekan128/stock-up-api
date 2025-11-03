@@ -3,19 +3,28 @@ package com.business.business.sale;
 
 import com.blazebit.persistence.CriteriaBuilder;
 import com.blazebit.persistence.CriteriaBuilderFactory;
+import com.blazebit.persistence.PagedList;
+import com.blazebit.persistence.PaginatedCriteriaBuilder;
+import com.blazebit.persistence.view.EntityViewManager;
+import com.blazebit.persistence.view.EntityViewSetting;
 import com.business.business.auth.AuthService;
 import com.business.business.exception.BadRequestException;
 import com.business.business.product.Product;
 import com.business.business.product.ProductRepository;
 import com.business.business.store.Store;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.Tuple;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -26,6 +35,7 @@ public class SaleService {
     private final ProductRepository productRepository;
     private final CriteriaBuilderFactory cbf;
     private final EntityManager em;
+    private final EntityViewManager evm;
 
 
     @Transactional
@@ -51,6 +61,7 @@ public class SaleService {
                 .quantity(quantity)
                 .soldPrice(soldPrice)
                 .totalAmount(totalAmount)
+                .costPrice(product.getCostPrice())
                 .build();
 
 
@@ -72,11 +83,14 @@ public class SaleService {
                 throw new BadRequestException("You are not allowed to create or edit this product");
             }
 
+            product.setNumberAvailable(product.getNumberAvailable() - req.getQuantity());
+
             double totalAmount = product.getSellingPrice() * req.getQuantity();
             return Sale.builder()
                     .product(product)
                     .quantity(req.getQuantity())
                     .soldPrice(product.getSellingPrice())
+                    .costPrice(product.getCostPrice())
                     .totalAmount(totalAmount)
                     .build();
         }).collect(Collectors.toList());
@@ -117,6 +131,115 @@ public class SaleService {
 //        cb.where("createdAt").between(from).and(to);
         if (productId != null) cb.where("product.id").eq(productId);
         return cb.getResultList();
+    }
+
+
+    public Page<SaleView> filterSales(LocalDateTime from, LocalDateTime to, String productId,
+                                      String sortBy,
+                                      String direction, int page, int size) {
+        CriteriaBuilder<Sale> cb = cbf.create(em, Sale.class);
+
+        if (from != null) {
+            cb.where("createdAt").ge(from);
+        }
+        if (to != null) {
+            cb.where("createdAt").le(to);
+        }
+        if (productId != null) {
+            cb.where("product.id").eq(productId);
+        }
+
+        cb.orderByAsc("id");
+
+        if (sortBy != null) {
+//            boolean ascending = direction == null || direction.equalsIgnoreCase("asc");
+            if (direction == null || direction.equalsIgnoreCase("asc")) {
+                cb.orderByAsc(sortBy);
+            }
+            else if (direction.equalsIgnoreCase("desc")){
+                cb.orderByDesc(sortBy);
+            }
+        } else {
+            cb.orderByDesc("createdAt"); // Default order: latest sales first
+        }
+
+        EntityViewSetting<SaleView, PaginatedCriteriaBuilder<SaleView>> setting =
+                EntityViewSetting.create(SaleView.class, page, size);
+
+        PaginatedCriteriaBuilder<SaleView> paginatedCb = evm.applySetting(setting, cb);
+        PagedList<SaleView> result = paginatedCb.getResultList();
+
+        ////.....
+
+        // Blaze Persistence pagination
+//        PagedList<Sale> resultPage = cb.orderByDesc("createdAt")
+//                .page(page, size)
+//                .getResultList();
+
+        return new PageImpl<>(
+                result,
+                PageRequest.of(page, size),
+                result.getTotalSize()
+        );
+    }
+
+    public SalesSummaryView getSalesSummary(LocalDateTime from, LocalDateTime to) {
+        CriteriaBuilder<Tuple> cb = cbf.create(em, Tuple.class)
+                .from(Sale.class);
+
+        if (from != null) cb.where("createdAt").ge(from);
+        if (to != null) cb.where("createdAt").le(to);
+
+        // Profit = (soldPrice - costPrice) * quantity
+        cb.select("SUM(quantity)", "totalQuantity")
+                .select("SUM(totalAmount)", "totalRevenue")
+                .select("SUM(CASE WHEN soldPrice IS NULL OR costPrice IS NULL THEN 1 ELSE 0 END)", "excludedCount")
+                .select("SUM(CASE WHEN soldPrice IS NOT NULL AND costPrice IS NOT NULL THEN (soldPrice - costPrice) * quantity ELSE 0 END)", "totalProfit");
+
+        Tuple result = cb.getSingleResult();
+
+
+        Long totalQuantity = result.get("totalQuantity", Long.class);
+        Double totalRevenue = result.get("totalRevenue", Double.class);
+
+        return new SalesSummaryView(
+                totalQuantity != null ? totalQuantity : 0L,
+                totalRevenue != null ? totalRevenue : 0.0,
+                Optional.ofNullable(result.get("totalProfit", Double.class)).orElse(0.0),
+                Optional.ofNullable(result.get("excludedCount", Long.class)).orElse(0L)
+        );
+    }
+
+
+    public List<TopProductView> getTopSellingProducts(LocalDateTime from, LocalDateTime to, int limit) {
+        CriteriaBuilder<Tuple> cb = cbf.create(em, Tuple.class)
+                .from(Sale.class)
+                .groupBy("product.id")
+                .select("product.id", "productId")
+                .select("product.name", "productName")
+                .select("SUM(quantity)", "totalSold")
+                .select("SUM(totalAmount)", "totalRevenue")
+                .orderByAsc("id")
+                .orderByDesc("totalSold");
+
+        if (from != null) cb.where("createdAt").ge(from);
+        if (to != null) cb.where("createdAt").le(to);
+
+        List<Tuple> tuples = cb.page(0, limit).getResultList();
+        return tuples.stream()
+                .map(t -> new TopProductView(
+                        t.get("productId", UUID.class),
+                        t.get("productName", String.class),
+                        t.get("totalSold", Long.class),
+                        t.get("totalRevenue", Double.class)
+                ))
+                .toList();
+    }
+
+    public List<ProductStockView> getLowStockProducts(int threshold) {
+        CriteriaBuilder<Product> cb = cbf.create(em, Product.class);
+        cb.where("numberAvailable").lt(threshold);
+        return evm.applySetting(EntityViewSetting.create(ProductStockView.class), cb).getResultList();
     }
 
 

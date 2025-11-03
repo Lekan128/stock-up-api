@@ -2,6 +2,7 @@ package com.business.business.sale;
 
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,9 +36,40 @@ public class SaleController {
 
 
     @GetMapping("/filter")
-    public List<Sale> filterByDate(@RequestParam(required = false) LocalDateTime from, @RequestParam(required = false) LocalDateTime to, @RequestParam(required = false) String productId) {
-        return saleService.filterSales(from, to, productId);
+    public Page<SaleView> filterByDate(
+            @RequestParam(required = false) LocalDateTime from,
+            @RequestParam(required = false) LocalDateTime to,
+            @RequestParam(required = false) String productId,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "desc") String direction,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return saleService.filterSales(from, to, productId, sortBy, direction, page, size);
     }
+
+    @GetMapping("/summary")
+    public SalesSummaryView getSalesSummary(
+            @RequestParam(required = false) LocalDateTime from,
+            @RequestParam(required = false) LocalDateTime to
+    ) {
+        return saleService.getSalesSummary(from, to);
+    }
+
+    @GetMapping("/top-products")
+    public List<TopProductView> getTopSellingProducts(
+            @RequestParam(required = false) LocalDateTime from,
+            @RequestParam(required = false) LocalDateTime to,
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        return saleService.getTopSellingProducts(from, to, limit);
+    }
+
+    @GetMapping("/low-stock")
+    public List<ProductStockView> getLowStockProducts(@RequestParam(defaultValue = "10") int stockThreshold) {
+        return saleService.getLowStockProducts(stockThreshold);
+    }
+
 
     @GetMapping
     public List<Sale> getAll() {

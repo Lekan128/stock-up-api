@@ -15,6 +15,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -27,6 +30,11 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+//@FilterDef(
+//        name = "shopFilter",
+//        parameters = @ParamDef(name = "isDeleted", type = Boolean.class)
+//)
+//@Filter(name = "shopFilter", condition = "deleted = :isDeleted")
 public class Sale extends SoftDeletableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -41,6 +49,8 @@ public class Sale extends SoftDeletableEntity {
     @Column(name = "sold_price", nullable = false)
     private double soldPrice;
 
+    @Column(name = "cost_price")
+    private Double costPrice;
 
     @Column(name = "quantity", nullable = false)
     private int quantity;
