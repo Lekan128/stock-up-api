@@ -68,7 +68,7 @@ public class AuthService {
         return getCurrentAuthenticatedUser().getStore();
     }
 
-    private AuthResponse generateTokensSaveTokensAndDeleteExpiredTokens(User user){
+    public AuthResponse generateTokensSaveTokensAndDeleteExpiredTokens(User user){
         String accessToken = jwtService.generateAccessToken(user);
 
         deleteAllUserExpiredTokensFor(user);
