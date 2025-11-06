@@ -162,12 +162,12 @@
 		<dependency>
 			<groupId>io.github.lekan128.aiagent</groupId>
 			<artifactId>ai-agent-api</artifactId>
-			<version>1.0.1</version>
+			<version>1.0.1-Snapshot</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.lekan128.aiagent</groupId>
 			<artifactId>ai-agent-core</artifactId>
-			<version>1.0.1</version>
+			<version>1.0.1-Snapshot</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.lekan128.webscraper</groupId>
@@ -179,6 +179,11 @@
 			<groupId>org.testcontainers</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+			<version>3.2.2</version>
 		</dependency>
 	</dependencies>
 
