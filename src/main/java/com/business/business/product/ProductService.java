@@ -19,11 +19,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.lekan128.aiagent.api.Agent;
-import io.github.lekan128.aiagent.api.ObjectMapperSingleton;
 import io.github.lekan128.aiagent.api.annotation.AiToolMethod;
 import io.github.lekan128.aiagent.api.annotation.ArgDesc;
 import io.github.lekan128.aiagent.api.llm.Gemini;
 import io.github.lekan128.aiagent.core.AgentProvider;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -34,7 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -170,12 +169,17 @@ public class ProductService {
         return productRepository.saveAll(products);
     }
 
-    @AiToolMethod("Get all saved products")
+    @AiToolMethod("Get all products the current user")
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
-    public List<ProductShortView> filter(UUID categoryId, String search, boolean searchTags) {
+    @AiToolMethod("Search for a particular product")
+    public List<ProductShortView> filter(
+            @Nullable @ArgDesc("product category id") UUID categoryId,
+            @ArgDesc("The search word") String search,
+            @ArgDesc("if product tag should be included in the tag")boolean searchTags
+    ) {
         CriteriaBuilder<Product> productCriteriaBuilder = cbf.create(em, Product.class);
 
         if (categoryId!=null){

@@ -12,6 +12,14 @@ import com.business.business.exception.BadRequestException;
 import com.business.business.product.Product;
 import com.business.business.product.ProductRepository;
 import com.business.business.store.Store;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import io.github.lekan128.aiagent.api.ObjectMapperSingleton;
+import io.github.lekan128.aiagent.api.annotation.AiToolMethod;
+import io.github.lekan128.aiagent.api.annotation.ArgDesc;
+import io.github.lekan128.aiagent.impl.method.caller.ReflectionCaller;
+import io.github.lekan128.aiagent.impl.method.caller.ReflectionInvocableMethod;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Tuple;
 import lombok.RequiredArgsConstructor;
@@ -116,6 +124,7 @@ public class SaleService {
                 .orElseThrow(() -> new IllegalArgumentException("Sale not found"));
     }
 
+    @AiToolMethod("Get all the user's sale")
     public List<Sale> findAll() {
         return saleRepository.findAll();
     }
@@ -181,6 +190,13 @@ public class SaleService {
                 PageRequest.of(page, size),
                 result.getTotalSize()
         );
+    }
+
+    @AiToolMethod("Returns the sales summary the current user")//2025-10-30T00:00:00
+    public SalesSummaryView getSalesSummary(@ArgDesc("Start date filter. Local date time format YYYY-MM-DDTHH:MM:SS") @Nullable String from, @ArgDesc("End date filter. Local date time format YYYY-MM-DDTHH:MM:SS") @Nullable String to) {
+        LocalDateTime fromDateTime = from != null ? LocalDateTime.parse(from) : null;
+        LocalDateTime toDateTime = to != null ? LocalDateTime.parse(to) : null;
+        return getSalesSummary(fromDateTime, toDateTime);
     }
 
     public SalesSummaryView getSalesSummary(LocalDateTime from, LocalDateTime to) {
