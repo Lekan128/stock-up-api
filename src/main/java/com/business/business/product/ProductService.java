@@ -171,6 +171,14 @@ public class ProductService {
 
     @AiToolMethod("Get all products the current user")
     public List<Product> getAllProducts() {
+        User currentAuthUser = AuthService.getCurrentAuthenticatedUser();
+        if (currentAuthUser.getRole() != Role.ADMIN){
+            if (currentAuthUser.getStore() == null){
+                throw new BadRequestException("You need to have a shop to access this endpoint.");
+            }
+            UUID storeId = currentAuthUser.getStore().id;
+            return productRepository.findAllByStore_Id(storeId);
+        }
         return productRepository.findAll();
     }
 
@@ -187,7 +195,18 @@ public class ProductService {
         }
 
         User currentAuthUser = AuthService.getCurrentAuthenticatedUser();
-        if (currentAuthUser.getRole() != Role.ADMIN && currentAuthUser.getStore() != null){
+
+        if (currentAuthUser.getRole() != Role.ADMIN && currentAuthUser.getStore() == null){
+            throw new BadRequestException("User does not have a shop");
+        }
+        if (currentAuthUser.getRole() != Role.ADMIN){
+            productCriteriaBuilder.where("store.id").eq(currentAuthUser.getStore().id);
+        }
+
+        if (currentAuthUser.getRole() != Role.ADMIN){
+            if (currentAuthUser.getStore() == null){
+                throw new BadRequestException("You need to have a shop to access this endpoint.");
+            }
             productCriteriaBuilder.where("store.id").eq(currentAuthUser.getStore().id);
         }
 
@@ -206,7 +225,9 @@ public class ProductService {
     }
 
     public Product getProductById(UUID id) {
-        return productRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Product not found"));
+        Product product = productRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        return product;
     }
 
     public Product updateProduct(UUID id, @Valid ProductDto productDto) {
