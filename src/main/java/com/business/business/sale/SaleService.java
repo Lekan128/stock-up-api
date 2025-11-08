@@ -12,6 +12,8 @@ import com.business.business.exception.BadRequestException;
 import com.business.business.product.Product;
 import com.business.business.product.ProductRepository;
 import com.business.business.store.Store;
+import com.business.business.user.Role;
+import com.business.business.user.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.github.lekan128.aiagent.api.ObjectMapperSingleton;
@@ -48,6 +50,7 @@ public class SaleService {
 
     @Transactional
     public Sale createSale(SaleRequest request) {
+        Store currentUserStore = AuthService.getCurrentAuthenticatedUserStore();
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("Product not found"));
 
@@ -110,7 +113,16 @@ public class SaleService {
     public List<Sale> getSales(LocalDate start, LocalDate end) {
         LocalDateTime startDateTime = start != null ? start.atStartOfDay() : null;
         LocalDateTime endDateTime = end != null ? end.plusDays(1).atStartOfDay() : null;
-        return saleRepository.findByDateRange(startDateTime, endDateTime);
+
+        User currentAuthenticatedUser = AuthService.getCurrentAuthenticatedUser();
+        if (currentAuthenticatedUser.getRole() == Role.ADMIN){
+            return saleRepository.findByDateRange(startDateTime, endDateTime, null);
+        }
+        if (currentAuthenticatedUser.getStore() == null){
+            throw new BadRequestException("Current user does not have a store.");
+        }
+        UUID storeId = currentAuthenticatedUser.getStore().id;
+        return saleRepository.findByDateRange(startDateTime, endDateTime, storeId);
     }
 
 
@@ -131,13 +143,21 @@ public class SaleService {
 
     public List<Sale> filterSales(LocalDateTime from, LocalDateTime to, String productId) {
         CriteriaBuilder<Sale> cb = cbf.create(em, Sale.class);
+        User currentAuthenticatedUser = AuthService.getCurrentAuthenticatedUser();
+        if (currentAuthenticatedUser.getRole() != Role.ADMIN && currentAuthenticatedUser.getStore() == null){
+            throw new BadRequestException("User does not have a store");
+        }
+        if (currentAuthenticatedUser.getRole() != Role.ADMIN){
+            cb.where("product.store.id").eq(currentAuthenticatedUser.getStore().id);
+        }
+
         if (from != null){
             cb.where("createdAt").gt(from);
         }
         if (to != null){
             cb.where("createdAt").lt(to);
         }
-//        cb.where("createdAt").between(from).and(to);
+
         if (productId != null) cb.where("product.id").eq(productId);
         return cb.getResultList();
     }
@@ -148,6 +168,14 @@ public class SaleService {
                                       String direction, int page, int size) {
         CriteriaBuilder<Sale> cb = cbf.create(em, Sale.class);
 
+        User currentAuthenticatedUser = AuthService.getCurrentAuthenticatedUser();
+        if (currentAuthenticatedUser.getRole() != Role.ADMIN && currentAuthenticatedUser.getStore() == null){
+            throw new BadRequestException("User does not have a store");
+        }
+        if (currentAuthenticatedUser.getRole() != Role.ADMIN){
+            cb.where("product.store.id").eq(currentAuthenticatedUser.getStore().id);
+        }
+
         if (from != null) {
             cb.where("createdAt").ge(from);
         }
@@ -157,8 +185,6 @@ public class SaleService {
         if (productId != null) {
             cb.where("product.id").eq(productId);
         }
-
-        cb.orderByAsc("id");
 
         if (sortBy != null) {
 //            boolean ascending = direction == null || direction.equalsIgnoreCase("asc");
@@ -171,6 +197,7 @@ public class SaleService {
         } else {
             cb.orderByDesc("createdAt"); // Default order: latest sales first
         }
+        cb.orderByAsc("id");
 
         EntityViewSetting<SaleView, PaginatedCriteriaBuilder<SaleView>> setting =
                 EntityViewSetting.create(SaleView.class, page, size);
@@ -200,9 +227,15 @@ public class SaleService {
     }
 
     public SalesSummaryView getSalesSummary(LocalDateTime from, LocalDateTime to) {
+        User currentAuthenticatedUser = AuthService.getCurrentAuthenticatedUser();
+        if (currentAuthenticatedUser.getStore() == null){
+            throw new BadRequestException("User does not have a store");
+        }
+
         CriteriaBuilder<Tuple> cb = cbf.create(em, Tuple.class)
                 .from(Sale.class);
 
+        cb.where("product.store.id").eq(currentAuthenticatedUser.getStore().id);
         if (from != null) cb.where("createdAt").ge(from);
         if (to != null) cb.where("createdAt").le(to);
 
@@ -228,6 +261,11 @@ public class SaleService {
 
 
     public List<TopProductView> getTopSellingProducts(LocalDateTime from, LocalDateTime to, int limit) {
+        User currentAuthenticatedUser = AuthService.getCurrentAuthenticatedUser();
+        if (currentAuthenticatedUser.getStore() == null){
+            throw new BadRequestException("User does not have a store");
+        }
+
         CriteriaBuilder<Tuple> cb = cbf.create(em, Tuple.class)
                 .from(Sale.class)
                 .groupBy("product.id")
@@ -238,6 +276,7 @@ public class SaleService {
                 .orderByAsc("id")
                 .orderByDesc("totalSold");
 
+        cb.where("product.store.id").eq(currentAuthenticatedUser.getStore().id);
         if (from != null) cb.where("createdAt").ge(from);
         if (to != null) cb.where("createdAt").le(to);
 
@@ -253,7 +292,13 @@ public class SaleService {
     }
 
     public List<ProductStockView> getLowStockProducts(int threshold) {
+        User currentAuthenticatedUser = AuthService.getCurrentAuthenticatedUser();
+        if (currentAuthenticatedUser.getStore() == null){
+            throw new BadRequestException("User does not have a store");
+        }
+
         CriteriaBuilder<Product> cb = cbf.create(em, Product.class);
+        cb.where("product.store.id").eq(currentAuthenticatedUser.getStore().id);
         cb.where("numberAvailable").lt(threshold);
         return evm.applySetting(EntityViewSetting.create(ProductStockView.class), cb).getResultList();
     }

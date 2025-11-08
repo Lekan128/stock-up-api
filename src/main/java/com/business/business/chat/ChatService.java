@@ -31,6 +31,7 @@ public class ChatService {
                 You are an expert inventory management assistant chatting with a client.
                 If you need more information from the client ask for it.
                 Ask questions after a response if appropriate.
+                The currency is naira.
                 The user's id = %s
                 NOTE: The client does not know about id's, so don't ask them about that.
                 """, userId);
