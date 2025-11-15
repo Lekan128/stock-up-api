@@ -1,5 +1,6 @@
 package com.business.business.s3;
 
+import com.business.business.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class FileUploadController {
 
     private final FileService fileService;
+    private final ProductService productService;
 
     @PostMapping("/upload")
     public ResponseEntity<FileUploadResponse> uploadFile(MultipartFile file) {
@@ -27,10 +29,12 @@ public class FileUploadController {
     }
 
     @PostMapping("/upload/{productId}")
-    public ResponseEntity<String> uploadProductImage(
+    public ResponseEntity<String> uploadAndSaveProductImage(
             @RequestBody MultipartFile file,
             @PathVariable UUID productId
     ) {
-        return new ResponseEntity<>(fileService.uploadProductImage(file, productId), HttpStatus.OK);
+        String imageUrl = fileService.uploadProductImage(file, productId);
+        productService.updateProductImage(productId, imageUrl);
+        return new ResponseEntity<>(imageUrl, HttpStatus.OK);
     }
 }
