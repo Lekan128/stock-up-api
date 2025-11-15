@@ -39,6 +39,9 @@ public class FileService {
     @Value("${aws.s3.secretKey}")
     private String secretKey;
 
+    @Value("${environment}")
+    private String environment;
+
     private static final String PRODUCT_IMAGE = "productImages";
 
     private final AuthService authService;
@@ -135,8 +138,9 @@ public class FileService {
      * multipartFile.getOriginalFilename()= @fileName
     * */
     private String getProductImageFilePath(String productIdString, String fileName){
-        // filename:productImage/{productId}/{productId}.extension
-        return PRODUCT_IMAGE + "/" + productIdString + "/" + productIdString + getFileExtension(fileName);
+        UUID storeId = AuthService.getCurrentAuthenticatedUserStore().id;
+        // filename: productImage/{environment}/storeId/{productId}/{productId}.extension
+        return String.format("%s/%s/%s/%s/%s", PRODUCT_IMAGE, environment, storeId.toString(), productIdString, productIdString + getFileExtension(fileName));
     }
 
     private static String getFileExtension(String fileName){
