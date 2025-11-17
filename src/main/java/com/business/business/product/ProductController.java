@@ -37,7 +37,7 @@ public class ProductController {
     @ResponseStatus(HttpStatus.CREATED)
     public List<Product> createProducts(@RequestBody @Valid List<ProductShortDto> productDtos) {
         List<Product> products = productService.createProductsWithSmallDto(productDtos);
-        productService.asynchronouslyGetAndSaveProductDescription(products);
+//        productService.asynchronouslyGetAndSaveProductDescription(products);
         return products;
     }
 

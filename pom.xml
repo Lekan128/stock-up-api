@@ -169,11 +169,11 @@
 			<artifactId>ai-agent-core</artifactId>
 			<version>1.0.2</version>
 		</dependency>
-		<dependency>
+		<!--<dependency>
 			<groupId>com.github.lekan128.webscraper</groupId>
 			<artifactId>web-scraper</artifactId>
 			<version>1.0-SNAPSHOT</version>
-		</dependency>
+		</dependency>-->
 
 		<dependency>
 			<groupId>org.testcontainers</groupId>
