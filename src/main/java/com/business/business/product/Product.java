@@ -1,5 +1,6 @@
 package com.business.business.product;
 
+import com.business.business.SoftDeletableEntity;
 import com.business.business.category.Category;
 import com.business.business.store.Store;
 import com.business.business.tag.Tag;
@@ -30,7 +31,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "product")
-public class Product {
+public class Product extends SoftDeletableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     public UUID id;
@@ -67,7 +68,6 @@ public class Product {
     @Column(nullable = false)
     public Double sellingPrice;
 
-    @Column
     public String description;
 
     @ManyToOne(optional = false)

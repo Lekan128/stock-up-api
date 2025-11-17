@@ -1,0 +1,8 @@
+ALTER TABLE sales ADD COLUMN store_id UUID;
+UPDATE sales s
+SET store_id = p.store_id
+FROM product p
+WHERE s.product_id = p.id;
+
+ALTER TABLE sales ALTER COLUMN store_id SET NOT NULL;
+ALTER TABLE sales ADD CONSTRAINT fk_sales_store FOREIGN KEY (store_id) REFERENCES store(id);
